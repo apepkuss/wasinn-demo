@@ -1,2 +1,2 @@
 [workspace]
-members = ["wasinn-mobilenet-app"]
+members = ["wasinn-mobilenet-app", "wasinn-app"]
