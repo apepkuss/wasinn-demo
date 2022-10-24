@@ -1,8 +1,8 @@
 //! To compile the inference app into wasm module, run the following command:
 //!
 //! ```rust
-//! // in the root directory of `wasinn-mobilenet-app` project
-//! cargo build --target wasm32-wasi --release
+//! // in the root directory of `wasinn-demo` project
+//! cargo build -p wasinn-mobilenet-app --target wasm32-wasi --release
 //! ```
 //!
 //! If the build is done successfully, `wasinn-mobilenet-app.wasm` file can be found in
@@ -105,100 +105,6 @@ fn infer_image() {
     println!("\t [Done]");
 
     println!("\n*** the inference result ***");
-    let results = sort_results(&output_buffer);
-    for i in 0..5 {
-        println!(
-            "   {}.) [{}]({:.4}){}",
-            i + 1,
-            results[i].0,
-            results[i].1,
-            imagenet_classes::IMAGENET_CLASSES[results[i].0]
-        );
-    }
-
-    println!("\n\n Done.");
-}
-
-fn infer_image_old() {
-    let args: Vec<String> = env::args().collect();
-    let model_bin_name: &str = &args[1];
-    let image_name: &str = &args[2];
-
-    println!("*** module_bin_name: {}", model_bin_name);
-    println!("*** image_name: {}", image_name);
-
-    let weights = fs::read(model_bin_name).unwrap();
-    println!(
-        "Read torchscript binaries, size in bytes: {}",
-        weights.len()
-    );
-
-    println!("*** [Step 1] load graph ...");
-    let graph = unsafe {
-        wasi_nn::load(
-            &[&weights],
-            wasi_nn::GRAPH_ENCODING_PYTORCH,
-            wasi_nn::EXECUTION_TARGET_CPU,
-        )
-        .expect("Failed to load graph")
-    };
-    println!("\t [Done] graph id: {}", graph);
-
-    println!("*** [Step 2] init execution context ...");
-    let context = unsafe {
-        wasi_nn::init_execution_context(graph).expect("Failed to initialize exeuction context")
-    };
-    println!("\t [Done] execution context id: {}", context);
-
-    // // Load a tensor that precisely matches the graph input tensor (see
-    // let tensor_data = image_to_tensor(image_name.to_string(), 224, 224);
-    // println!("Read input tensor, size in bytes: {}", tensor_data.len());
-    // let tensor = wasi_nn::Tensor {
-    //     dimensions: &[1, 3, 224, 224],
-    //     type_: wasi_nn::TENSOR_TYPE_F32,
-    //     data: &tensor_data,
-    // };
-
-    // println!("*** set input to the inference engine ...");
-    // unsafe {
-    //     wasi_nn::set_input(context, 0, tensor).unwrap();
-    // }
-
-    // Load a tensor that precisely matches the graph input tensor (see
-    println!("*** [Step 3] set input to the inference engine ...");
-    let tensor_data = image_to_tensor(image_name.to_string(), 224, 224);
-    println!("\t read input tensor, size in bytes: {}", tensor_data.len());
-    let tensor = wasi_nn::Tensor {
-        dimensions: &[1, 3, 224, 224],
-        type_: wasi_nn::TENSOR_TYPE_F32,
-        data: &tensor_data,
-    };
-    unsafe {
-        wasi_nn::set_input(context, 0, tensor).unwrap();
-    }
-    println!("\t [Done]");
-
-    println!("*** perform inference ...");
-    // Execute the inference.
-    unsafe {
-        wasi_nn::compute(context).unwrap();
-    }
-    println!("Executed graph inference");
-
-    println!("*** parse the inference result ...");
-    // Retrieve the output.
-    let mut output_buffer = vec![0f32; 1000];
-    unsafe {
-        wasi_nn::get_output(
-            context,
-            0,
-            &mut output_buffer[..] as *mut [f32] as *mut u8,
-            (output_buffer.len() * 4).try_into().unwrap(),
-        )
-        .unwrap();
-    }
-
-    println!("*** the inference result: ");
     let results = sort_results(&output_buffer);
     for i in 0..5 {
         println!(
